@@ -1,9 +1,10 @@
+import { MapView } from '../azuremap/converter';
 import { Func } from '../type';
 import { $state } from './app';
 import { IShape, build } from './shape';
 import { IPath } from './algo';
 import { ISelex } from '../d3';
-import { IListener, IBound, ILocation } from '../bingmap';
+import { IListener, IBound, ILocation } from '../azuremap';
 
 let root: ISelex;
 
@@ -38,6 +39,8 @@ class VisualFlow {
     }
 
     remove() {
+        clearTimeout(this._hoverTimer);
+        this._hoverTimer = null;
         this._tRoot.remove();
     }
 
@@ -109,7 +112,7 @@ class VisualFlow {
         events.pathInited && events.pathInited(all);
     }
 
-    transform(map: Microsoft.Maps.Map, pzoom: number) {
+    transform(map: MapView, pzoom: number) {
         if (this._shape) {
             this._shape.transform(map, pzoom);
             this._translate();
@@ -168,6 +171,7 @@ export function sources(): ILocation[] {
 let flows = [] as VisualFlow[];
 
 export function reweight(weight: Func<number, number>): number[] {
+    if (!flows.length) return [0, 0];
     let exts = flows.map(v => v.reweight(weight));
     let min = Math.min(...exts.map(e => e[0]));
     let max = Math.max(...exts.map(e => e[1]));

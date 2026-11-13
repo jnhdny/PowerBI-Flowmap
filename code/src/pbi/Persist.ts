@@ -2,6 +2,12 @@ import powerbi from "powerbi-visuals-api";
 
 export class Persist<T> {
   public static HOST = null as powerbi.extensibility.visual.IVisualHost;
+  public static cancelPending() {
+    for (const item of Persist._all) {
+      clearTimeout(item._handler);
+      item._handler = undefined;
+    }
+  }
   private static _all = [] as Persist<any>[];
   public static update(view: powerbi.DataView): boolean {
     //cannot use _all.some(...), we have to updated every one of them

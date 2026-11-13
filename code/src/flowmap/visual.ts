@@ -13,16 +13,18 @@ import { Format } from "./format";
 
 import { override, groupBy, StringMap, Func, copy, values, sort, dict } from '../lava/type';
 import { selex } from "../lava/d3";
-import { MapFormat, ILocation } from "../lava/bingmap";
+import { MapFormat, ILocation } from "../lava/azuremap";
 import * as app from '../lava/flowmap/app';
 import { keys, sum } from "d3";
+import deepEqual from 'fast-deep-equal';
+import { AZURE_MAPS_KEY } from '../config/embeddedAzureMaps';
 
 type Role = 'Origin' | 'Dest' | 'width' | 'color' | 'OLati' | 'OLong' | 'DLati' | 'DLong' | 'OName' | 'DName' | 'Tooltip' | 'Label';
 type Read<T> = Func<number, T>;
 type Ctx = Context<Role, Format>;
 
 const persist = {
-    map: new Persist<[Microsoft.Maps.Location, number]>('persist', 'map'),
+    map: new Persist<[ILocation, number]>('persist', 'map'),
     geocode: new Persist<StringMap<ILocation>>('persist', 'geocoding'),
     manual: new Persist<StringMap<ILocation>>('persist', 'manual'),
     banner: new Persist<string[]>('persist', 'banner')
@@ -106,7 +108,7 @@ export class Visual implements IVisual {
         if (!options) {
             return;
         }
-        selex(this._target = options.element).sty.cursor('default');
+        selex(this._target = options.element).sty.cursor('default').sty.position('relative');
         tooltip.init(options);
         const ctx = this._ctx = new Context(options.host, new Format());
         ctx.fmt.width.bind('width', "item", "customize");
@@ -127,6 +129,7 @@ export class Visual implements IVisual {
         app.events.pie.onPieCreated = group => {
             tooltip.add(group, arg => helper.pieTooltip(arg.data.rows, arg.data.type, this._ctx));
         };
+        ctx.update({ metadata: { columns: [] } });
     }
 
     private _buildLegendLabels(role: 'color' | 'width'): StringMap<string> {
@@ -309,6 +312,7 @@ export class Visual implements IVisual {
 
 
         override(ctx.original('mapControl'), override(ctx.original('mapElement'), config.map));
+        config.map.subscriptionKey = AZURE_MAPS_KEY.trim();
 
         config.injections = Object.assign({}, persist.geocode.value({}));
         copy(coords(ctx, 'Origin', 'OLati', 'OLong', coords(ctx, 'Dest', 'DLati', 'DLong', {})), config.injections);
@@ -321,23 +325,61 @@ export class Visual implements IVisual {
 
     private _inited = false;
     private _initing = false;
+    private _disposed = false;
+    private _pending: VisualUpdateOptions;
+    private _lastView: powerbi.DataView;
 
     public update(options: VisualUpdateOptions) {
-        const view = options.dataViews && options.dataViews[0] || {} as powerbi.DataView;
-        if (Persist.update(view)) {
+        if (this._disposed) return;
+        this._target.style.width = options.viewport.width + 'px';
+        this._target.style.height = options.viewport.height + 'px';
+        if (this._ctx.isResizeVisualUpdateType(options) && !options.dataViews?.length) {
+            if (this._inited) app.$state.mapctl.resize();
+            return;
+        }
+        const previousView = this._lastView;
+        // A host refresh without a data view carries no new formatting values.
+        // Retain settings, but clear rows if the host explicitly signals a data change.
+        const view = options.dataViews?.[0] || ((options.type & 2)
+            ? { metadata: previousView?.metadata || { columns: [] } }
+            : previousView || { metadata: { columns: [] } });
+        const persistenceChanged = Persist.update(view);
+        const ctx = this._ctx.update(view);
+        this._lastView = view;
+        // Read settings before skipping an echo of our own saved state:
+        // Power BI can combine that echo with a format edit or a new dataset.
+        if (this._inited && persistenceChanged && !ctx.dirty()
+            && deepEqual(previousView?.categorical, view.categorical)) {
+            app.$state.mapctl.resize();
+            return;
+        }
+        if (!AZURE_MAPS_KEY.trim()) {
+            this._cfg = this._config();
+            this._target.replaceChildren();
+            const message = document.createElement('div');
+            message.className = 'flowmap-message';
+            message.setAttribute('role', 'status');
+            message.textContent = 'This visual was built without an Azure Maps key. Ask the visual author to rebuild it with AZURE_MAPS_KEY configured.';
+            this._target.appendChild(message);
             return;
         }
         if (this._initing) {
+            this._pending = options;
             return;
         }
-        const ctx = this._ctx.update(view);
         const reset = (config: app.Config) => app.reset(config, () => ctx.meta.mapControl.autoFit && app.tryFitView());
         if (!this._inited) {
+            this._target.replaceChildren();
+            this._cfg = this._config();
             this._initing = true;
             const mapFmt = new MapFormat();
             override(ctx.original('mapElement'), override(ctx.original('mapControl'), mapFmt));
+            mapFmt.subscriptionKey = AZURE_MAPS_KEY.trim();
             app.init(this._target, mapFmt, persist.banner.value() || [], ctl => {
+                if (this._disposed) return;
                 const [center, zoom] = persist.map.value() || [null, null];
+                app.$state.reset(this._cfg = this._config());
+                ctl.restyle(this._cfg.map);
                 center && ctl.setCenterZoom(center, zoom);
                 ctl.add({ transform: (c, p, e) => e && persist.map.write([c.map.getCenter(), c.map.getZoom()], 400) });
                 this._initing = false;
@@ -347,11 +389,15 @@ export class Visual implements IVisual {
                 else {
                     reset(this._cfg = this._config());
                 }
+                const pending = this._pending;
+                this._pending = null;
+                if (pending) this.update(pending);
             });
             this._inited = true;
         }
         else {
             if (ctx.isResizeVisualUpdateType(options)) {
+                app.$state.mapctl.resize();
                 return;
             }
             const config = this._cfg = this._config(), fmt = ctx.fmt;
@@ -403,6 +449,7 @@ export class Visual implements IVisual {
 
     public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstance[] {
         const oname = options.objectName as keyof Format, ctx = this._ctx, fmt = ctx.fmt, cfg = this._cfg;
+        if (!cfg && oname !== 'mapControl') return [];
         if (ctx.meta.advance.relocate) {
             if (oname !== 'advance') {
                 return null;
@@ -410,6 +457,8 @@ export class Visual implements IVisual {
             return fmt.advance.dumper().metas(['relocate', 'located', 'unlocated']).result;
         }
         switch (oname) {
+            case 'mapControl':
+                return fmt.mapControl.dumper().metas(['type', 'lang', 'pan', 'zoom', 'autoFit']).result;
             case 'advance':
                 return fmt.advance.dumper().metas(['cache', 'relocate']).result;
             case 'legend':
@@ -469,7 +518,16 @@ export class Visual implements IVisual {
                 }
                 return bubble.result;
             default:
-                return fmt[oname].dumper().default;
+                return fmt[oname] ? fmt[oname].dumper().default : [];
         }
+    }
+
+    public destroy() {
+        this._disposed = true;
+        this._pending = null;
+        this._lastView = null;
+        Persist.cancelPending();
+        if (this._inited) app.destroy();
+        this._target.replaceChildren();
     }
 }

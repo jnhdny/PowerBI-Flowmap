@@ -1,4 +1,4 @@
-import { IListener } from "../bingmap";
+import { IListener } from "../azuremap";
 import { Banner } from './banner';
 import { Pie, all as pies, get as pie } from './pie';
 import * as util from "./util";
@@ -20,7 +20,7 @@ export function init(d3: ISelex): IListener {
         .content(p => marker(p))
         .key(p => key(p))
         .anchor(p => {
-            const pnt = $state.pixel(p.addr, Microsoft.Maps.PixelReference.control);
+            const pnt = $state.pixel(p.addr, 'control');
             pnt.y += (p.type === 'out' ? -1 : 1) * p.radius();
             return pnt;
         });

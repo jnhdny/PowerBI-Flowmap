@@ -1,5 +1,5 @@
 import { StringMap } from "../type";
-import { ILocation, MapFormat } from "../bingmap";
+import { ILocation, MapFormat } from "../azuremap";
 import { Setting } from "../../pbi/numberFormat";
 
 type Func<T = string> = (i: number) => T;

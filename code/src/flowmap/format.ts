@@ -1,4 +1,4 @@
-import { MapFormat } from '../lava/bingmap';
+import { MapFormat } from '../lava/azuremap';
 import { Setting } from '../pbi/numberFormat';
 
 export class Format {
@@ -44,7 +44,13 @@ export class Format {
         unlocated: true
     };
 
-    mapControl = MapFormat.control(new MapFormat(), { autoFit: true });
+    mapControl = {
+        type: new MapFormat().type,
+        lang: new MapFormat().lang,
+        pan: true,
+        zoom: true,
+        autoFit: true
+    };
 
     mapElement = MapFormat.element(new MapFormat(), {});
 

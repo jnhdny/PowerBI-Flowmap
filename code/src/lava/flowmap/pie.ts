@@ -1,7 +1,7 @@
 import { StringMap, Func, keys, dict, remap, groupBy } from '../type';
 import { values } from 'd3';
 import { sum } from 'd3-array';
-import { IListener } from '../bingmap';
+import { IListener } from '../azuremap';
 import { ISelex } from '../d3';
 import { $state } from './app';
 

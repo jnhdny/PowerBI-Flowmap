@@ -1,3 +1,31 @@
+@import (inline) "../node_modules/azure-maps-control/dist/atlas.min.css";
+
+.flowmap-map {
+    position: relative;
+    overflow: hidden;
+    background: white;
+}
+.flowmap-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    user-select: none;
+}
+.flowmap-message {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    z-index: 10;
+    padding: 12px;
+    color: #333;
+    background: #fff;
+    border: 1px solid #ddd;
+    font: 13px/1.5 "Segoe UI", sans-serif;
+}
+.flowmap-message[hidden] { display: none; }
+
 p {
     font-size: 20px;
     font-weight: bold;
@@ -18,7 +46,7 @@ svg {
 }
 
 
-.MicrosoftMap, svg {
+.flowmap-map, svg {
     cursor: default;
 }
 

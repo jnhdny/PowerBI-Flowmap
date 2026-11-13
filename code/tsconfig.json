@@ -1,18 +1,21 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "target": "es6",
+        "target": "es2017",
+        "module": "esnext",
+        "esModuleInterop": true,
         "sourceMap": true,
         "outDir": "./.tmp/build/",
         "moduleResolution": "node",
         "declaration": true,
+        "types": [],
+        "skipLibCheck": true,
         "lib": [
-            "es2015",
+            "es2020",
             "dom"
         ]
     },
+    "include": [],
     "files": [
         "src/visual.ts"
     ]

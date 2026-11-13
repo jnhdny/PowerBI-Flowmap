@@ -22,7 +22,8 @@ export class Context<R extends string, F> {
     }
 
     public isResizeVisualUpdateType(options: powerbi.extensibility.visual.VisualUpdateOptions): boolean {
-        return options.type === 4 || options.type === 32 || options.type === 36;
+        const resize = 4 | 32; // Resize and ResizeEnd; the Power BI API is type-only.
+        return (options.type & resize) !== 0 && (options.type & ~resize) === 0;
     }
 
     public persist<O extends keyof F, P extends keyof F[O]>(oname: O, pname: P, v: F[O][P]) {
@@ -107,8 +108,7 @@ export class Context<R extends string, F> {
     }
 
     public data<T = powerbi.PrimitiveValue>(r: R): T[] {
-        const c = first(this._view.categorical.values, c => c.source.roles[r], null)
-            || first(this._view.categorical.categories, c => c.source.roles[r], null);
+        const c = this.roles.column(r);
         return c ? c.values as any : null;
     }
 
@@ -175,7 +175,7 @@ export class Context<R extends string, F> {
         if (this._rows !== null) {
             return this._rows;
         }
-        if (this._view && this._view.categorical.categories[0]) {
+        if (this._view && this._view.categorical && this._view.categorical.categories && this._view.categorical.categories[0]) {
             this._rows = sequence(0, this._view.categorical.categories[0].values.length);
         }
         else {
@@ -197,7 +197,7 @@ export class Context<R extends string, F> {
         this._rows = null;
         //update other things below
         this.roles.update(view);
-        const format = (view.metadata.objects || {}) as any as F;
+        const format = (view.metadata && view.metadata.objects || {}) as any as F;
         this._fmt = {} as any;
         for (const oname in this.fmt) {
             this._fmt[oname] = this.fmt[oname].update(format[oname]);
@@ -206,8 +206,7 @@ export class Context<R extends string, F> {
     }
 
     public reader<T = powerbi.PrimitiveValue>(r: R): Func<number, T> {
-        let c = first(this._view.categorical.values, c => c.source.roles[r], null)
-            || first(this._view.categorical.categories, c => c.source.roles[r], null);
+        const c = this.roles.column(r);
         if (c) {
             return r => (c.values[r] as any as T);
         }

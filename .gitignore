@@ -2,3 +2,9 @@ node_modules
 .tmp
 .bundle
 Default EULA.pdf
+.env
+.env.*
+code/src/config/
+code/dist/
+code/webpack.statistics.*.html
+code/.cert/

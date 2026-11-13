@@ -1,6 +1,6 @@
 import { Func, StringMap, Action, IRect, dict, keys } from "../type";
 import { selex } from "../d3";
-import { Controller, MapFormat, GeoQuery, ILocation } from '../bingmap';
+import { Controller, MapFormat, GeoQuery, ILocation } from '../azuremap';
 import { Config } from "./config";
 import { extent } from "d3-array";
 import { scaleLinear, interpolateRgb, scaleSqrt, scaleIdentity } from "d3";
@@ -40,7 +40,7 @@ class State {
   reset(config: Config) {
     this.config = config;
   }
-  pixel(addr: string, ref?: Microsoft.Maps.PixelReference) {
+  pixel(addr: string, ref?: 'center' | 'control') {
     return this.mapctl.pixel(this.loc(addr), ref);
   }
 }
@@ -65,7 +65,7 @@ export function init(div: HTMLElement, mapFmt: MapFormat, initialPopups: string[
   root.append('div').att.id('legend').sty.position('absolute').sty.top('0px').sty.left('0px');
   root.append('div').att.id('warn');
   legend = new Legend(root.select('#legend'));
-  const ctl = $state.mapctl = new Controller('#view');
+  const ctl = $state.mapctl = new Controller(root.select('#view').node<HTMLElement>());
   ctl.restyle(mapFmt, _ => {
     ctl.svg.sty.cursor('default').sty.pointer_events('visiblePainted');
     ctl.add(flows.init(ctl.svg.append('g')));
@@ -108,6 +108,15 @@ export function tryFitView() {
 }
 
 let geoquery = null as GeoQuery;
+
+export function destroy() {
+  if (geoquery) geoquery.cancel();
+  geoquery = null;
+  flows.clear();
+  if ($state.mapctl) $state.mapctl.destroy();
+  $state = new State();
+  legend = null;
+}
 
 function queue(groups: number[][], then: Action) {
   const next = () => {
@@ -247,7 +256,7 @@ function addGroup(group: number[]) {
       allValids.push(row);
     }
   }
-  flows.add(groupValid);
+  if (groupValid.length) flows.add(groupValid);
   resetColor();
   resetWidth();
   flows.reformat(true, true);

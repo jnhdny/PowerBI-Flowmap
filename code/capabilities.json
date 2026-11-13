@@ -1,4 +1,5 @@
 {
+    "privileges": [{ "name": "WebAccess", "essential": true, "parameters": ["https://atlas.microsoft.com", "https://*.atlas.microsoft.com"] }],
     "dataRoles": [
         {
             "displayName": "Origin",
@@ -459,18 +460,8 @@
         "mapElement": {
             "displayName": "Map element",
             "properties": {
-                "forest": { "displayName": "Forest", "type": { "bool": true } },
-                "road": { "displayName": "Road", "type": { "enumeration": [
-                    {"displayName": "Default", "value": "color"},
-                    {"displayName": "Gray w/ labels", "value": "gray_label"},
-                    {"displayName": "Gray w/o labels", "value": "gray"},
-                    {"displayName": "Hidden", "value": "hidden"}
-                ]}},
                 "label": { "displayName": "Label", "type": { "bool": true } },
-                "city": { "displayName": "City", "type": { "bool": true } },
-                "icon": { "displayName": "Icon", "type": { "bool": true } },
-                "building": { "displayName": "Building", "type": { "bool": true } },
-                "area": { "displayName": "Area", "type": { "bool": true } }
+                "building": { "displayName": "Building", "type": { "bool": true } }
             }
         },
         "advance": {

@@ -1,4 +1,4 @@
-import { IListener, Controller, ILocation } from '../bingmap';
+import { IListener, Controller, ILocation } from '../azuremap';
 import { StringMap, IPoint, Func} from "../type";
 import { drag } from 'd3-drag';
 import { ISelex, selex } from "../d3";

@@ -1,11 +1,11 @@
-import * as deepmerge from 'deepmerge';
+import deepmerge from 'deepmerge';
 import powerbi from 'powerbi-visuals-api';
 import { StringMap, Func, partial, copy } from '../lava/type';
 import { Persist } from './Persist';
 import { Category } from './Category';
 import { Context } from './Context';
-import * as deepequal from 'fast-deep-equal';
-import * as clone from 'clone';
+import deepequal from 'fast-deep-equal';
+import clone from 'clone';
 type Instance = powerbi.VisualObjectInstance;
 
 export interface Binding<O, R extends string> {

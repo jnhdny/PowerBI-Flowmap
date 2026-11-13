@@ -1,15 +1,15 @@
 {
     "visual": {
-        "name": "flowmap",
-        "displayName": "Flow map",
-        "guid": "flowmap30CFDD5B92F848C88242B1E81C8C33C7",
+        "name": "flowmapAzure",
+        "displayName": "Flow map (Azure)",
+        "guid": "flowmapAzureCDE1392989654FB6B0A9193E6574B41D",
         "visualClassName": "Visual",
-        "version": "1.4.9",
-        "description": "Flowmap is a diagram that visualizes the movement of objects from one location to another.",
+        "version": "2.0.5.0",
+        "description": "Flow map (Azure) visualizes movement between locations using Azure Maps.",
         "supportUrl": "https://weiweicui.github.io/PowerBI-Flowmap/",
         "gitHubUrl": "https://github.com/weiweicui/PowerBI-Flowmap/"
       },
-    "apiVersion": "2.6.0",
+    "apiVersion": "4.7.0",
     "author": {
         "name": "Weiwei Cui",
         "email": "weiweicui@outlook.com"
@@ -17,7 +17,7 @@
     "assets": {
         "icon": "assets/icon.png"
     },
-    "externalJS": ["./src/global.js"],
+    "externalJS": [],
     "style": "style/visual.less",
     "capabilities": "capabilities.json",
     "dependencies": null,
